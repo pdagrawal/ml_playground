@@ -1,0 +1,9 @@
+{% autoescape off %}
+Hello {{ first_name }}
+
+Welcome to CryptoBoard!!
+
+Please confirm your email address by clicking on the following link.
+
+Confirmation Link: http://{{ domain }}{% url 'accounts:activate' uidb64=uid token=token %}
+{% endautoescape %}

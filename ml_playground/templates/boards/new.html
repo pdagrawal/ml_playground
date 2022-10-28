@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Boards{% endblock %}
+
+{% block content %}
+    <section class="page-section" id="new-board">
+        <div class="container">
+            <h2 class="page-section-heading text-center text-uppercase text-secondary mb-0">Create new board</h2>
+            <div class="divider-custom">
+                <div class="divider-custom-line"></div>
+                <div class="divider-custom-icon"><i class="fas fa-star"></i></div>
+                <div class="divider-custom-line"></div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-lg-8 col-xl-7">
+                    <form id="boardForm" name="createBoard" novalidate="novalidate" method="post">
+                        {% csrf_token %}
+
+                        {% for field in form %}
+                            <div class="form-floating mb-3">
+                                {{ field }}
+                                {{ field.label_tag }}
+                                {% for error in field.errors %}
+                                    <p class="help-block text-danger">{{error}}</p>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                        <button class="btn btn-primary btn-xl" id="submitButton" type="submit">Create</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+{% endblock %}

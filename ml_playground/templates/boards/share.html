@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Share Boards{% endblock %}
+
+{% block content %}
+    <section class="page-section" id="share-board">
+        <div class="container">
+            <div class="col-md-8 pull-left">
+                <h2 class="page-section-heading text-center text-uppercase text-secondary mb-0">Share with people</h2>
+                <div class="divider-custom">
+                    <div class="divider-custom-line"></div>
+                    <div class="divider-custom-icon"><i class="fas fa-star"></i></div>
+                    <div class="divider-custom-line"></div>
+                </div>
+                <div class="justify-content-center">
+                    <form id="shareBoardForm" name="shareBoard" novalidate="novalidate" method="post">
+                        {% csrf_token %}
+                        <div class="form-floating mb-3">
+                            <select name="user_id" id="user" class="form-control" data-sb-validations="required">
+                                <option disabled selected> -- select a user -- </option>
+                                {% for id, fname, lname in data_for_options %}
+                                    <option value={{id}}>{{fname}} {{lname}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <select name="permission" id="permission" class="form-control" data-sb-validations="required">
+                                <option disabled selected> -- select a permission level -- </option>
+                                <option value="read">Read</option>
+                                <option value="write">Write</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary btn-xl" id="submitButton" type="submit">Share</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col-md-4 pull-right">
+                <div class="justify-content-center text-align-center">
+                    <b>Shared with</b>
+                    <ul>
+                        {% for bu in board_users %}
+                            <li>
+                                {{ bu.user.get_full_name }} -
+                                {{ bu.permission }}
+                                {% if bu.permission != 'owner' and request.user.id == board.owner_id %}
+                                    <a href="{% url 'boards:remove_board_user' board_user_id=bu.id %}">Remove</a>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+{% endblock %}

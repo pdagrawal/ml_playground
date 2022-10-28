@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Boards{% endblock %}
+
+{% block content %}
+<br>
+<div class="row">
+    <div class="col-md-10">
+        <h1 style="text-align: center;">{{ board.decrypted_name }}</h1>
+    </div>
+    <div class="col-md-2">
+        <a class="btn btn-primary" href="{% url 'boards:versions' id=board.reference %}">Previous Versions</a>
+    </div>
+</div>
+<br>
+<div class="container">
+    <form id="boardForm" name="createBoardContent" novalidate="novalidate" method="post">
+        {% csrf_token %}
+        <div class="form-floating mb-3">
+            <textarea class="richtext_content_field" name="content" data-sb-validations="required">
+            {{ version.decrypted_content }}
+            </textarea>
+        </div>
+        <div class="container-md text-center">
+            <button class="btn btn-primary" id="submitButton" type="submit">Save</button>
+            <a class="btn btn-secondary" href="{% url 'boards:show' id=board.reference %}">Discard</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

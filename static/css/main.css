@@ -1,0 +1,115 @@
+body, main {
+    height: 100%;
+}
+
+@media (min-width: 992px) {
+    .masthead {
+        padding-top: 6rem;
+        padding-bottom: 6rem;
+    }
+}
+
+.masthead {
+    height: 100%;
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+    background-image: url("../img/home_background.jpg");
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.page-section {
+    padding: 3rem 0;
+}
+.page-section#signup {
+    padding: 1.5rem 0;
+}
+.divider-custom {
+    margin: 0;
+}
+
+.form-floating > .form-control, .form-floating > .form-select {
+    height: 4.5rem;
+    line-height: 1.25;
+}
+
+.page-section#signup .form-floating label {
+    font-size: 1.2rem;
+}
+
+.page-section#signup .page-section-heading {
+    font-size: 2.5rem;
+}
+
+.page-section#signup .svg-inline--fa.fa-w-18 {
+    width: 0.8em;
+}
+
+.page-section#signup .form-floating > .form-control {
+    height: 4rem;
+}
+
+/* form errors and request messages and alerts */
+.badge-light {
+    margin-top: 2.5em;
+}
+.errorlist {
+    list-style: none;
+    padding-left: 0px;
+    opacity: 0.8;
+    color: #dc3545;
+    font-size: 12px;
+}
+.msg {
+    margin: 0 !important;
+    margin-bottom: 4px !important;
+    margin-top: 4px !important;
+}
+.messages {
+    z-index: 10000;
+    position: fixed;
+    right: 2em;
+    margin-top: -1em;
+    list-style: none;
+    text-align: right;
+}
+.alert {
+    margin-top: 1rem;
+}
+.alert-error {
+    background-color: #f2dede;
+    border-color: #ebcccc;
+    color: #a94442;
+}
+
+.text-align-center {
+    text-align: center;
+}
+
+.square-box{
+    min-height: 600px;
+    border: 1px solid #333;
+}
+
+.pull-right {
+    float: right;
+}
+
+.pull-left {
+    float: left;
+}
+
+#share-board .form-floating > .form-control:focus, .form-floating > .form-control:not(:placeholder-shown){
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.boards .card {
+    min-height: 320px;
+    max-height: 320px;
+}
+
+.boards .card .content {
+    min-height: 200px;
+    max-height: 200px;
+}

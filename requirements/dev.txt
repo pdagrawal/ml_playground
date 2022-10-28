@@ -1,0 +1,5 @@
+# Everything we need in the development environment in addition to the production requirements
+-r prod.txt
+
+black==21.10b0
+mypy==0.910

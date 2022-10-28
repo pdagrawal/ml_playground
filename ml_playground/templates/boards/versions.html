@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Board Versions{% endblock %}
+
+{% block content %}
+  <div class="container-md">
+    <br/>
+    <h1 class="pull-left">{{ board.decrypted_name }} - Version History</h1>
+    <div class="pull-right">
+      <a class="btn btn-primary" href="{% url 'boards:show' id=board.reference %}"> Go back to board</a>
+    </div>
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th scope="col">Version No.</th>
+          <th scope="col">Modified By</th>
+          <th scope="col">Modified At</th>
+          <th scope="col">Name</th>
+          <th scope="col">Content</th>
+          <th scope="col">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for version in versions %}
+          <tr>
+            <td>{{ forloop.counter }}</th>
+            <td>{{ version.modified_by_name }}</td>
+            <td>{{ version.created_at }}</td>
+            <td>{{ version.decrypted_name }}</td>
+            <td>{% autoescape off %}{{ version.decrypted_content }}{% endautoescape %}</td>
+            <td><a href="{% url 'boards:restore_version' version_id=version.id %}">RESTORE</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

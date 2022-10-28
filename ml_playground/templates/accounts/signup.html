@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+    <section class="page-section" id="signup">
+        <div class="container">
+            <!-- Contact Section Heading-->
+            <h2 class="page-section-heading text-center text-uppercase text-secondary mb-0">Create account</h2>
+            <!-- Icon Divider-->
+            <div class="divider-custom">
+                <div class="divider-custom-line"></div>
+                <div class="divider-custom-icon"><i class="fas fa-star"></i></div>
+                <div class="divider-custom-line"></div>
+            </div>
+            <!-- Contact Section Form-->
+            <div class="row justify-content-center">
+                <div class="col-lg-8 col-xl-7">
+                    <form id="signupForm" name="signup" novalidate="novalidate" method="post">
+                        {% csrf_token %}
+
+                        {% for field in form %}
+                            <div class="form-floating">
+                                {{ field }}
+                                {{ field.label_tag }}
+                                {% for error in field.errors %}
+                                    <p class="help-block text-danger">{{error}}</p>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                        <!-- Submit Button-->
+                        <div class="row justify-content-center">
+                            <button class="btn btn-primary btn-xl mt-3" id="submitButton" type="submit">Sign Up</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

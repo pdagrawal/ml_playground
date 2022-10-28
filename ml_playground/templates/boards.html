@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}BOARDS{% endblock %}
+
+{% block content %}
+
+<style>
+  h1{
+    text-align: center;
+  }
+ 
+
+  .container{
+    width: 90%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(350px, 1fr));
+    grid-gap: 20px;
+  }
+
+  .box{
+    height: 200px;
+    color: black;
+    border: 2px solid red;
+    position: relative;
+  }
+  a {
+    font-size: 40px;
+    color: black;
+    display:flex;
+    align-items: center;
+    justify-content: center;
+    }
+
+  h2 {
+    display:flex;
+    align-items: center;
+    justify-content: center;
+    }
+</style>
+<h1> BOARDS</h1>
+<div class="container">
+  <div class="box">
+    <a href="https://google.com">Board1</a>
+    <h2>box1</h2>
+  </div>
+  <div class="box">
+    <a href="https://google.com">Board2</a>
+    <h2>box2</h2>
+  </div>
+  <div class="box">
+    <a href="https://google.com">Board3</a>
+    <h2>box3</h2>
+  </div>
+  <div class="box">
+    <a href="https://google.com">Board4</a>
+    <h2>box4</h2>
+  </div>
+  <div class="box">
+    <a href="https://google.com">Board5</a>
+    <h2>box5</h2>
+  </div>
+  <div class="box">
+    <a href="https://google.com">Board6</a>
+    <h2>box6</h2>
+  </div>
+  <div class="box">
+    <a href="https://google.com">Board7</a>
+    <h2>box7</h2>
+  </div>
+  <div class="box">
+    <a href="https://google.com">Board8</a>
+    <h2>box8</h2>
+  </div>
+  <div class="box">
+    <a href="https://google.com">Board9</a>
+    <h2>box9</h2>
+  </div>
+  <div class="box">
+    <a href="https://google.com">Board10</a>
+    <h2>box10</h2>
+  </div>
+</div>
+
+
+{% endblock %}
