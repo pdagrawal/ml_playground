@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}ML Playground{% endblock %}
+
+{% block content %}
+    <section class="page-section" id="share-board">
+        <div class="container">
+            <h2 class="page-section-heading text-center text-uppercase text-secondary mb-0">Attributes Selection</h2>
+            <div class="divider-custom">
+                <div class="divider-custom-line"></div>
+                <div class="divider-custom-icon"><i class="fas fa-star"></i></div>
+                <div class="divider-custom-line"></div>
+            </div>
+            <div class="justify-content-center">
+                <form id="shareBoardForm" name="shareBoard" novalidate="novalidate" method="post">
+                    {% csrf_token %}
+                    <div class="col-md-6 pull-left padding-10">
+                        <div class="list-group">
+                            {% for column in field_names %}
+                                <label class="list-group-item">
+                                    <input class="form-check-input me-1" type="checkbox" value="{{ column }}">
+                                    {{ column }}
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-md-6 pull-right padding-10">
+                        <select name="user_id" id="user" class="form-control" data-sb-validations="required">
+                            <option disabled selected> -- select column for classification -- </option>
+                            {% for column in field_names %}
+                                <option value={{column}}>{{column}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button class="btn btn-primary btn-xl padding-10 pl-10" id="submitButton" type="submit">Share</button>
+                </form>
+            </div>
+        </div>
+    </section>
+{% endblock %}

@@ -113,3 +113,14 @@ body, main {
     min-height: 200px;
     max-height: 200px;
 }
+
+.padding-10 {
+    padding: 10px !important;
+}
+
+.mt-100 {
+    margin-top: 100px !important;
+}
+.pl-10 {
+    padding-left: 10px !important;
+}

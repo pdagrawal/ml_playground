@@ -12,9 +12,9 @@ def about(request: HttpRequest) -> HttpResponse:
 
 def upload_csv(request: HttpRequest) -> HttpResponse:
     # return redirect('public:index')
-    data = {}
+    field_names = []
     if "GET" == request.method:
-        return render(request, "public/upload_csv.html", data)
+        return render(request, "public/upload_csv.html", field_names)
     # if not GET, then proceed
     try:
         csv_file = request.FILES["csv_file"]
@@ -29,7 +29,7 @@ def upload_csv(request: HttpRequest) -> HttpResponse:
         file_data = csv_file.read().decode("utf-8")
 
         lines = file_data.split("\n")
-        messages.success(request, f"Total Lines: {len(lines)}")
+        field_names = lines[0].split(',')
         #loop over the lines and save them in db. If error , store as string and then display
         # for line in lines:
         #     fields = line.split(",")
@@ -52,4 +52,4 @@ def upload_csv(request: HttpRequest) -> HttpResponse:
         # logging.getLogger("error_logger").error("Unable to upload file. "+repr(e))
         messages.error(request, "Unable to upload file. "+repr(e))
 
-    return redirect('public:index')
+    return render(request, "field_selection.html", {'field_names': field_names})
