@@ -14,7 +14,7 @@ def upload_csv(request: HttpRequest) -> HttpResponse:
     # return redirect('public:index')
     field_names = []
     if "GET" == request.method:
-        return render(request, "public/upload_csv.html", field_names)
+        return render(request, "public/index.html", field_names)
     # if not GET, then proceed
     try:
         csv_file = request.FILES["csv_file"]
@@ -30,6 +30,14 @@ def upload_csv(request: HttpRequest) -> HttpResponse:
 
         lines = file_data.split("\n")
         field_names = lines[0].split(',')
+        file_name = 'tmp/' + csv_file.name
+        with open(file_name, 'wb+') as destination:
+            for chunk in csv_file.chunks():
+                destination.write(chunk)
+        request.session['uploaded_file_path'] = file_name
+
+        # file_hash = hash(file_name)
+        # request.session[file_hash] = file_name
         #loop over the lines and save them in db. If error , store as string and then display
         # for line in lines:
         #     fields = line.split(",")
@@ -53,3 +61,7 @@ def upload_csv(request: HttpRequest) -> HttpResponse:
         messages.error(request, "Unable to upload file. "+repr(e))
 
     return render(request, "field_selection.html", {'field_names': field_names})
+
+def work_in_progress(request: HttpRequest) -> HttpResponse:
+    messages.success(request, f"Filepath: {request.session['uploaded_file_path']}")
+    return render(request, "work_in_progress.html")
