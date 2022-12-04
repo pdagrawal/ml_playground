@@ -87,21 +87,34 @@ def create_svm_model(training_samples, clf_labels, **svm_params):
 
 def transform_dataset(df, dump_encoder=False, clf_param=""):
     for column_name in df.columns:
-        if df[column_name].dtype == object:
-            enc = preprocessing.LabelEncoder().fit(df[column_name])
-            df[column_name] = enc.transform(df[column_name])
+        print(column_name)
+        # if df[column_name].dtype == object:
+        enc = preprocessing.LabelEncoder().fit(df[column_name])
+        df[column_name] = enc.transform(df[column_name])
 
-            # Save the label encoder for future predictions
-            if dump_encoder and column_name == clf_param:
-                with open('tmp/iris_encoder.pkl', 'wb') as file:
-                    pickle.dump(enc, file, pickle.HIGHEST_PROTOCOL)
+        print("==================")
+        print(clf_param)
+        print("==================")
+        # Save the label encoder for future predictions
+        if dump_encoder and column_name == clf_param:
+            with open('tmp/iris_encoder.pkl', 'wb') as file:
+                pickle.dump(enc, file, pickle.HIGHEST_PROTOCOL)
     return df
 
 
 def process_dataset(dataset_file, training_params=[], clf_params=""):
     df = pd.read_csv(dataset_file)
-    df.head()
+    print(df.head())
+    print("============Inside process_dataset===========")
+    print(len(df.index))
+    print(df[df.columns[0]].count())
 
+    # Cleaning the data
+    df = df.dropna()
+    print(df.head())
+    print("============Inside process_dataset===========")
+    print(len(df.index))
+    print(df[df.columns[0]].count())
     # Transform non-numeric columns
     df = transform_dataset(df, True, clf_params)
     # Get classification labels.
@@ -132,11 +145,15 @@ def train_model(request: HttpRequest) -> HttpResponse:
     classification = request.POST.get("classification")
     algorithm  = request.POST.get("algorithm")
     # data = process_dataset("tmp/iris.csv", ["sepal_length", "sepal_width", "petal_length", "petal_width"], "class")
+    print("========================")
+    print(request.session['uploaded_file_path'])
+    print("========================")
     data = process_dataset(request.session['uploaded_file_path'], attributes, classification)
 
     svm_params = {'kernel': 'rbf'}
     create_svm_model(data[0], data[1], **svm_params)
 
+    # x_test = [[1, 'Full-time', 'Mid-Senior level']]
     x_test = [[7.7, 2.6, 6.9, 2.3]]
     sample = pd.DataFrame(
         x_test, columns=attributes)
