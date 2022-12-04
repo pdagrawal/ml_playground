@@ -85,11 +85,16 @@ def create_svm_model(training_samples, clf_labels, **svm_params):
         pickle.dump(svm_model, f)
 
 
-def transform_dataset(df):
-    le = preprocessing.LabelEncoder()
+def transform_dataset(df, dump_encoder=False, clf_param=""):
     for column_name in df.columns:
         if df[column_name].dtype == object:
-            df[column_name] = le.fit_transform(df[column_name])
+            enc = preprocessing.LabelEncoder().fit(df[column_name])
+            df[column_name] = enc.transform(df[column_name])
+
+            # Save the label encoder for future predictions
+            if dump_encoder and column_name == clf_param:
+                with open('tmp/iris_encoder.pkl', 'wb') as file:
+                    pickle.dump(enc, file, pickle.HIGHEST_PROTOCOL)
     return df
 
 
@@ -98,7 +103,7 @@ def process_dataset(dataset_file, training_params=[], clf_params=""):
     df.head()
 
     # Transform non-numeric columns
-    df = transform_dataset(df)
+    df = transform_dataset(df, True, clf_params)
     # Get classification labels.
     clf_labels = df[clf_params]
     print(clf_labels.size)
@@ -116,30 +121,29 @@ def process_dataset(dataset_file, training_params=[], clf_params=""):
 def test(model_file, sample):
     with open(model_file, 'rb') as f:
         model = pickle.load(f)
-    return model.predict(sample)
+
+    with open('tmp/iris_encoder.pkl', 'rb') as handle:
+        encoder = pickle.load(handle)
+
+    return encoder.inverse_transform(model.predict(sample))
 
 def train_model(request: HttpRequest) -> HttpResponse:
-    print('=====================')
-    print(dict(request.POST.items()))
-    print('=====================')
-    print(dict(request.POST.getlist('attributes')))
-    request.POST.getlist('attributes')
-    # print(request.POST.get("classification"))
-    # print(request.POST.get("algorithm"))
-    print('=====================')
-    data = process_dataset("tmp/iris.csv", ["sepal_length", "sepal_width", "petal_length", "petal_width"], "class")
-    # data = process_dataset(request.session['uploaded_file_path'], ["sepal_length", "sepal_width", "petal_length", "petal_width"], "class")
+    attributes = request.POST.getlist('attributes')
+    classification = request.POST.get("classification")
+    algorithm  = request.POST.get("algorithm")
+    # data = process_dataset("tmp/iris.csv", ["sepal_length", "sepal_width", "petal_length", "petal_width"], "class")
+    data = process_dataset(request.session['uploaded_file_path'], attributes, classification)
 
     svm_params = {'kernel': 'rbf'}
     create_svm_model(data[0], data[1], **svm_params)
 
     x_test = [[7.7, 2.6, 6.9, 2.3]]
     sample = pd.DataFrame(
-        x_test, columns=["sepal_length", "sepal_width", "petal_length", "petal_width"])
+        x_test, columns=attributes)
     sample = transform_dataset(sample)
     predicted_value = test("tmp/iris.pkl", sample)
     messages.success(request, "successfully predicted.")
-    return redirect('public:prediction_result', predicted_value = predicted_value)
+    return render(request, "prediction_result.html", {'predicted_value': predicted_value})
 
 def prediction_result(request: HttpRequest, predicted_value) -> HttpResponse:
     return render(request, "prediction_result.html", {'predicted_value': predicted_value})

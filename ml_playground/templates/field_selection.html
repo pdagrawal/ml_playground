@@ -19,7 +19,10 @@
                         <h3>Select attributes to train the model</h3>
                         <div class="list-group">
                             {% for column in field_names %}
-                                <label for="attribute_{{column}}"><input id="attribute_{{column}}" name="attributes[]" type="checkbox" checked="checked" value="{{ column }}" required>{{ column }}</label>
+                                <label class="list-group-item">
+                                    <input name="attributes" class="form-check-input me-1" type="checkbox" value="{{ column }}">
+                                    {{ column }}
+                                </label>
                             {% endfor %}
                         </div>
                     </div>
