@@ -1,3 +1,4 @@
+import os
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse
 from django.contrib import messages
@@ -86,35 +87,27 @@ def create_svm_model(training_samples, clf_labels, **svm_params):
 
 
 def transform_dataset(df, dump_encoder=False, clf_param=""):
+    if dump_encoder and os.path.exists('tmp/iris_encoder.pkl'):
+        os.remove('tmp/iris_encoder.pkl')
     for column_name in df.columns:
         print(column_name)
-        # if df[column_name].dtype == object:
-        enc = preprocessing.LabelEncoder().fit(df[column_name])
-        df[column_name] = enc.transform(df[column_name])
+        if df[column_name].dtype == object:
+            enc = preprocessing.LabelEncoder().fit(df[column_name])
+            df[column_name] = enc.transform(df[column_name])
 
-        print("==================")
-        print(clf_param)
-        print("==================")
-        # Save the label encoder for future predictions
-        if dump_encoder and column_name == clf_param:
-            with open('tmp/iris_encoder.pkl', 'wb') as file:
-                pickle.dump(enc, file, pickle.HIGHEST_PROTOCOL)
+            # Save the label encoder for future predictions
+            if dump_encoder and column_name == clf_param:
+                with open('tmp/iris_encoder.pkl', 'wb') as file:
+                    pickle.dump(enc, file, pickle.HIGHEST_PROTOCOL)
     return df
 
 
 def process_dataset(dataset_file, training_params=[], clf_params=""):
     df = pd.read_csv(dataset_file)
-    print(df.head())
-    print("============Inside process_dataset===========")
-    print(len(df.index))
-    print(df[df.columns[0]].count())
 
     # Cleaning the data
     df = df.dropna()
-    print(df.head())
-    print("============Inside process_dataset===========")
-    print(len(df.index))
-    print(df[df.columns[0]].count())
+
     # Transform non-numeric columns
     df = transform_dataset(df, True, clf_params)
     # Get classification labels.
@@ -135,10 +128,14 @@ def test(model_file, sample):
     with open(model_file, 'rb') as f:
         model = pickle.load(f)
 
-    with open('tmp/iris_encoder.pkl', 'rb') as handle:
-        encoder = pickle.load(handle)
-
-    return encoder.inverse_transform(model.predict(sample))
+    predicted_value = model.predict(sample)
+    if os.path.exists('tmp/iris_encoder.pkl'):
+        with open('tmp/iris_encoder.pkl', 'rb') as handle:
+            encoder = pickle.load(handle)
+        
+        predicted_value =  encoder.inverse_transform(predicted_value)
+    
+    return predicted_value
 
 def train_model(request: HttpRequest) -> HttpResponse:
     attributes = request.POST.getlist('attributes')
