@@ -18,7 +18,7 @@
                     <div class="col-md-6 pull-left padding-10">
                         <h3>Select attributes to train the model</h3>
                         <div class="list-group">
-                            {% for column in field_names %}
+                            {% for column in column_names %}
                                 <label class="list-group-item">
                                     <input name="attributes" class="form-check-input me-1" type="checkbox" value="{{ column }}">
                                     {{ column }}
@@ -30,7 +30,7 @@
                         <h3>Label for classification</h3>
                         <select name="classification" id="classification" class="form-control" data-sb-validations="required">
                             <option disabled selected> -- select column for classification -- </option>
-                            {% for column in field_names %}
+                            {% for column in column_names %}
                                 <option value={{column}}>{{column}}</option>
                             {% endfor %}
                         </select>

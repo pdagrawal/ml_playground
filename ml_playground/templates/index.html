@@ -7,11 +7,11 @@
 <!-- Masthead-->
 <header class="text-white text-center">
     <div class="container d-flex align-items-center flex-column">
-        <form action="{% url "public:upload_csv" %}" method="POST" enctype="multipart/form-data" class="form-horizontal col-md-12">
+        <form action="{% url "public:upload_dataset" %}" method="POST" enctype="multipart/form-data" class="form-horizontal col-md-12">
             {% csrf_token %}
             <div class="col-md-8 mt-100">
                 <div class="col-md-8 pull-left">
-                    <input type="file" name="csv_file" id="csv_file" required="True" class="form-control">
+                    <input type="file" name="dataset_file" id="dataset_file" required="True" class="form-control">
                 </div>
                 <div class="col-md-4 pull-right" style="margin-bottom:10px;">
                     <button class="btn btn-primary"> <span class="glyphicon glyphicon-upload" style="margin-right:5px;"></span>Upload </button>

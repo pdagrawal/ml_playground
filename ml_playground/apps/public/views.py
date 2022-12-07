@@ -31,57 +31,37 @@ def index(request: HttpRequest) -> HttpResponse:
 def about(request: HttpRequest) -> HttpResponse:
     return render(request, "about.html")
 
-def upload_csv(request: HttpRequest) -> HttpResponse:
+def upload_dataset(request: HttpRequest) -> HttpResponse:
     # return redirect('public:index')
     field_names = []
     if "GET" == request.method:
         return render(request, "public/index.html", field_names)
     # if not GET, then proceed
     try:
-        csv_file = request.FILES["csv_file"]
-        if not csv_file.name.endswith('.csv'):
-            messages.error(request, 'File is not CSV type')
-            return render(request, "public/index.html")
+        dataset_file = request.FILES["dataset_file"]
         #if file is too large, return
-        if csv_file.multiple_chunks():
-            messages.error(request, "Uploaded file is too big (%.2f MB)." % (csv_file.size/(1000*1000),))
+        if dataset_file.multiple_chunks():
+            messages.error(request, "Uploaded file is too big (%.2f MB)." % (dataset_file.size/(1000*1000),))
             return render(request, "public/index.html")
 
-        file_data = csv_file.read().decode("utf-8")
+        if dataset_file.name.endswith('.csv'):
+            file_data = pd.read_csv(dataset_file)
+        elif dataset_file.name.endswith('.xlsx'):
+            file_data = pd.read_excel(dataset_file)
+        else:
+            messages.error(request, 'Only CSV and xlsx filetypes supported!')
+            return render(request, "public/index.html")
 
-        lines = file_data.split("\n")
-        field_names = lines[0].split(',')
-        file_name = 'tmp/' + csv_file.name
+        column_names = file_data.head()
+        file_name = 'tmp/' + dataset_file.name
         with open(file_name, 'wb+') as destination:
-            for chunk in csv_file.chunks():
+            for chunk in dataset_file.chunks():
                 destination.write(chunk)
         request.session['uploaded_file_path'] = file_name
-
-        # file_hash = hash(file_name)
-        # request.session[file_hash] = file_name
-        #loop over the lines and save them in db. If error , store as string and then display
-        # for line in lines:
-        #     fields = line.split(",")
-        #     data_dict = {}
-        #     data_dict["name"] = fields[0]
-        #     data_dict["start_date_time"] = fields[1]
-        #     data_dict["end_date_time"] = fields[2]
-        #     data_dict["notes"] = fields[3]
-        #     try:
-        #         form = EventsForm(data_dict)
-        #         if form.is_valid():
-        #             form.save()
-        #         else:
-        #             logging.getLogger("error_logger").error(form.errors.as_json())
-        #     except Exception as e:
-        #         logging.getLogger("error_logger").error(repr(e))
-        #         pass
-
     except Exception as e:
-        # logging.getLogger("error_logger").error("Unable to upload file. "+repr(e))
         messages.error(request, "Unable to upload file. "+repr(e))
 
-    return render(request, "field_selection.html", {'field_names': field_names})
+    return render(request, "field_selection.html", {'column_names': column_names})
 
 def work_in_progress(request: HttpRequest) -> HttpResponse:
     messages.success(request, f"Filepath: {request.session['uploaded_file_path']}")
@@ -132,11 +112,14 @@ def transform_dataset(df, dump_encoder=False, clf_param=""):
 
 
 def process_dataset(dataset_file, training_params=[], clf_params=""):
-    df = pd.read_csv(dataset_file)
+    if dataset_file.endswith('.csv'):
+        df = pd.read_csv(dataset_file)
+    elif dataset_file.endswith('.xlsx'):
+        df = pd.read_excel(dataset_file)
 
-    # Cleaning the data
+    logger.info(df.describe())
+    logger.info(df.info())
     df = df.dropna()
-
     # Transform non-numeric columns
     df = transform_dataset(df, True, clf_params)
     # Get classification labels.
@@ -162,9 +145,7 @@ def test(model_file, sample):
     if os.path.exists('tmp/model_encoder.pkl'):
         with open('tmp/model_encoder.pkl', 'rb') as handle:
             encoder = pickle.load(handle)
-
         predicted_value =  encoder.inverse_transform(predicted_value)
-
 
     return predicted_value
 
@@ -176,9 +157,6 @@ def train_model(request: HttpRequest) -> HttpResponse:
     logger.info(joined_parameters)
     classification = request.POST.get("classification")
     algorithm  = request.POST.get("algorithm")
-    logger.info("========================")
-    logger.info(request.session['uploaded_file_path'])
-    logger.info("========================")
     data = process_dataset(request.session['uploaded_file_path'], attributes, classification)
 
     if algorithm == "svm":
