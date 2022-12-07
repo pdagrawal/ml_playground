@@ -2,3 +2,5 @@ ml_playground/__pycache__/*
 **/__pycache__/
 ml_playground/creds.py
 ml_playground/__pycache__/*
+tmp/**
+info_logs.log

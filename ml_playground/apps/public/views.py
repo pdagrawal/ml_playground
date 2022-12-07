@@ -2,6 +2,7 @@ import os
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse
 from django.contrib import messages
+import logging
 
 import pandas as pd
 import pickle
@@ -17,8 +18,10 @@ from sklearn import tree
 # from sklearn.metrics import confusion_matrix
 # from sklearn.model_selection import train_test_split
 
+logger = logging.getLogger(__name__)
 
 def index(request: HttpRequest) -> HttpResponse:
+    logger.info("Hello world")
     return render(request, "index.html")
 
 
@@ -89,14 +92,14 @@ def create_svm_model(training_samples, clf_labels, **svm_params):
         pickle.dump(svm_model, f)
 
 def create_multiple_regression_model(training_samples, clf_labels):
-    multiple_reg=LinearRegression()  
+    multiple_reg=LinearRegression()
     multiple_reg.fit(training_samples, clf_labels)
 
     with open("tmp/multiple.pkl",'wb') as f:
         pickle.dump(multiple_reg,f)
 
 def create_logistic_regression_model(training_samples, clf_labels, **logistic_params):
-    logistic=LogisticRegression(**logistic_params)  
+    logistic=LogisticRegression(**logistic_params)
     logistic.fit(training_samples, clf_labels)
 
     with open("tmp/logistic.pkl",'wb') as f:
@@ -129,7 +132,11 @@ def process_dataset(dataset_file, training_params=[], clf_params=""):
     df = pd.read_csv(dataset_file)
 
     # Cleaning the data
+    logger.info("===========Before dropna===========")
+    logger.info(df.to_markdown())
     df = df.dropna()
+    logger.info("===========After dropna===========")
+    logger.info(df.to_markdown())
 
     # Transform non-numeric columns
     df = transform_dataset(df, True, clf_params)
@@ -156,10 +163,10 @@ def test(model_file, sample):
     if os.path.exists('tmp/model_encoder.pkl'):
         with open('tmp/model_encoder.pkl', 'rb') as handle:
             encoder = pickle.load(handle)
-        
+
         predicted_value =  encoder.inverse_transform(predicted_value)
 
-    
+
     return predicted_value
 
 def train_model(request: HttpRequest) -> HttpResponse:
@@ -172,43 +179,43 @@ def train_model(request: HttpRequest) -> HttpResponse:
     print("========================")
     data = process_dataset(request.session['uploaded_file_path'], attributes, classification)
 
-    x_test = [[7.7, 2.6, 6.9, 2.3]]
+    # x_test = [[7.7, 2.6, 6.9, 2.3]]  # Iris-virginica
+    # x_test = [['Mid-Senior level', "Bachelor's Degree", "Financial Services"]]  # 0
+    # x_test = [['Mid-Senior level', "High School or equivalent", "Oil & Energy"]]  # 1
+    x_test = [['x','s','y','t','a','f','c','b','k','e','c','s','s','w','w','p','w','o','p','n','n','g']]  # e
+    # x_test = [['x','y','w','t','p','f','c','n','n','e','e','s','s','w','w','p','w','o','p','k','s','u']]  # p
+
     sample = pd.DataFrame(
         x_test, columns=attributes)
     sample = transform_dataset(sample)
 
     if algorithm == "SVM":
-
-            svm_params = {'kernel': 'rbf'}
-            create_svm_model(data[0], data[1], **svm_params)
-            predicted_value = test("tmp/svm.pkl", sample)
-
+        svm_params = {'kernel': 'rbf'}
+        create_svm_model(data[0], data[1], **svm_params)
+        predicted_value = test("tmp/svm.pkl", sample)
     elif algorithm == "Decision Tree":
-            dt_params = {}
-            model = create_decisiontree_model(data[0], data[1], **dt_params)
-            predicted_value = test("tmp/decision.pkl", sample)
-
+        dt_params = {}
+        model = create_decisiontree_model(data[0], data[1], **dt_params)
+        predicted_value = test("tmp/decision.pkl", sample)
     elif algorithm == "Multiple Regression":
-            create_multiple_regression_model(data[0], data[1])
-            predicted_value = test("tmp/multiple.pkl", sample)
-
-
+        create_multiple_regression_model(data[0], data[1])
+        predicted_value = test("tmp/multiple.pkl", sample)
     elif algorithm == "Logistic Regression":
-            logistic_params = {'solver' : 'liblinear', 'random_state' : 0}
-            model = create_logistic_regression_model(data[0], data[1], **logistic_params)
-            predicted_value = test("tmp/logistic.pkl", sample)
-        
+        logistic_params = {'solver' : 'liblinear', 'random_state' : 0}
+        model = create_logistic_regression_model(data[0], data[1], **logistic_params)
+        predicted_value = test("tmp/logistic.pkl", sample)
+
     # x_test = [[1, 'Full-time', 'Mid-Senior level']]
     #x_test = [[7.7, 2.6, 6.9, 2.3]]
     #sample = pd.DataFrame(
     #    x_test, columns=attributes)
     #sample = transform_dataset(sample)
     #predicted_value = test("tmp/iris.pkl", sample)
-    
+
     messages.success(request, "successfully predicted.")
     return render(request, "prediction_result.html", {'predicted_value': predicted_value})
 
-    
+
 
 
 def prediction_result(request: HttpRequest, predicted_value) -> HttpResponse:
