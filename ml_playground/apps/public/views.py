@@ -21,7 +21,10 @@ from sklearn import tree
 logger = logging.getLogger(__name__)
 
 def index(request: HttpRequest) -> HttpResponse:
-    logger.info("Hello world")
+    request.session['uploaded_file_path'] = None
+    request.session['joined_parameters'] = None
+    request.session['selected_algorithm'] = None
+    request.session['predicted_value'] = None
     return render(request, "index.html")
 
 
@@ -116,7 +119,7 @@ def transform_dataset(df, dump_encoder=False, clf_param=""):
     if dump_encoder and os.path.exists('tmp/model_encoder.pkl'):
         os.remove('tmp/model_encoder.pkl')
     for column_name in df.columns:
-        print(column_name)
+        # print(column_name)
         if df[column_name].dtype == object:
             enc = preprocessing.LabelEncoder().fit(df[column_name])
             df[column_name] = enc.transform(df[column_name])
@@ -132,11 +135,7 @@ def process_dataset(dataset_file, training_params=[], clf_params=""):
     df = pd.read_csv(dataset_file)
 
     # Cleaning the data
-    logger.info("===========Before dropna===========")
-    logger.info(df.to_markdown())
     df = df.dropna()
-    logger.info("===========After dropna===========")
-    logger.info(df.to_markdown())
 
     # Transform non-numeric columns
     df = transform_dataset(df, True, clf_params)
@@ -170,53 +169,63 @@ def test(model_file, sample):
     return predicted_value
 
 def train_model(request: HttpRequest) -> HttpResponse:
+    logger.info(request.POST)
     attributes = request.POST.getlist('attributes')
+    joined_parameters = ','.join(attributes)
+    request.session['joined_parameters'] = joined_parameters
+    logger.info(joined_parameters)
     classification = request.POST.get("classification")
     algorithm  = request.POST.get("algorithm")
-    # data = process_dataset("tmp/iris.csv", ["sepal_length", "sepal_width", "petal_length", "petal_width"], "class")
-    print("========================")
-    print(request.session['uploaded_file_path'])
-    print("========================")
+    logger.info("========================")
+    logger.info(request.session['uploaded_file_path'])
+    logger.info("========================")
     data = process_dataset(request.session['uploaded_file_path'], attributes, classification)
 
-    # x_test = [[7.7, 2.6, 6.9, 2.3]]  # Iris-virginica
-    # x_test = [['Mid-Senior level', "Bachelor's Degree", "Financial Services"]]  # 0
-    # x_test = [['Mid-Senior level', "High School or equivalent", "Oil & Energy"]]  # 1
-    x_test = [['x','s','y','t','a','f','c','b','k','e','c','s','s','w','w','p','w','o','p','n','n','g']]  # e
-    # x_test = [['x','y','w','t','p','f','c','n','n','e','e','s','s','w','w','p','w','o','p','k','s','u']]  # p
-
-    sample = pd.DataFrame(
-        x_test, columns=attributes)
-    sample = transform_dataset(sample)
-
-    if algorithm == "SVM":
+    if algorithm == "svm":
         svm_params = {'kernel': 'rbf'}
         create_svm_model(data[0], data[1], **svm_params)
-        predicted_value = test("tmp/svm.pkl", sample)
-    elif algorithm == "Decision Tree":
+    elif algorithm == "decision_tree":
         dt_params = {}
-        model = create_decisiontree_model(data[0], data[1], **dt_params)
-        predicted_value = test("tmp/decision.pkl", sample)
-    elif algorithm == "Multiple Regression":
+        create_decisiontree_model(data[0], data[1], **dt_params)
+    elif algorithm == "multiple_regression":
         create_multiple_regression_model(data[0], data[1])
-        predicted_value = test("tmp/multiple.pkl", sample)
-    elif algorithm == "Logistic Regression":
+    elif algorithm == "logistic_regression":
         logistic_params = {'solver' : 'liblinear', 'random_state' : 0}
-        model = create_logistic_regression_model(data[0], data[1], **logistic_params)
-        predicted_value = test("tmp/logistic.pkl", sample)
+        create_logistic_regression_model(data[0], data[1], **logistic_params)
 
-    # x_test = [[1, 'Full-time', 'Mid-Senior level']]
-    #x_test = [[7.7, 2.6, 6.9, 2.3]]
-    #sample = pd.DataFrame(
-    #    x_test, columns=attributes)
-    #sample = transform_dataset(sample)
-    #predicted_value = test("tmp/iris.pkl", sample)
+    request.session['selected_algorithm'] = algorithm
+    messages.success(request, "Model trained succcessfully.")
+    return redirect('public:test_model')
 
-    messages.success(request, "successfully predicted.")
-    return render(request, "prediction_result.html", {'predicted_value': predicted_value})
+def test_model(request):
+    if request.method == 'GET':
+        joined_parameters = request.session['joined_parameters']
+        column_names = joined_parameters.split(',')
+        return render(request, "test_model.html", {'column_names': column_names})
+    elif request.method == 'POST':
+        logger.info(request.POST)
+        data = dict(request.POST.items())
+        del data['csrfmiddlewaretoken']
+
+        # x_test = [[7.7, 2.6, 6.9, 2.3]]  # Iris-virginica
+        # x_test = [['Mid-Senior level', "Bachelor's Degree", "Financial Services"]]  # 0
+        # x_test = [['Mid-Senior level', "High School or equivalent", "Oil & Energy"]]  # 1
+        # x_test = [['x','s','y','t','a','f','c','b','k','e','c','s','s','w','w','p','w','o','p','n','n','g']]  # e
+        # x_test = [['x','y','w','t','p','f','c','n','n','e','e','s','s','w','w','p','w','o','p','k','s','u']]  # p
+
+        logger.info("===========Data=============")
+        logger.info(data)
+        logger.info("========================")
+        x_test = [data.values()]
+        joined_parameters = request.session['joined_parameters']
+        column_names = joined_parameters.split(',')
+        sample = pd.DataFrame(x_test, columns=column_names)
+        sample = transform_dataset(sample)
+        predicted_value = test(f"tmp/{request.session['selected_algorithm']}.pkl", sample)
+        request.session['predicted_value'] = str(predicted_value)
+        messages.success(request, "Classification successful.")
+        return redirect('public:prediction_result')
 
 
-
-
-def prediction_result(request: HttpRequest, predicted_value) -> HttpResponse:
-    return render(request, "prediction_result.html", {'predicted_value': predicted_value})
+def prediction_result(request: HttpRequest) -> HttpResponse:
+    return render(request, "prediction_result.html", {'predicted_value': request.session['predicted_value']})

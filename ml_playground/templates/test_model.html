@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}ML Playground{% endblock %}
+
+{% block content %}
+    <section class="page-section" id="share-board">
+        <div class="container">
+            <h2 class="page-section-heading text-center text-uppercase text-secondary mb-0">Test Case</h2>
+            <div class="divider-custom">
+                <div class="divider-custom-line"></div>
+                <div class="divider-custom-icon"><i class="fas fa-star"></i></div>
+                <div class="divider-custom-line"></div>
+            </div>
+            <div class="justify-content-center">
+                <form name="testModel" novalidate="novalidate" method="post">
+                    {% csrf_token %}
+                    {% for column_name in column_names %}
+                        <div class="form-group padding-10">
+                            <label for="formGroup{{column_name}}Input">{{column_name}}</label>
+                            <input name="{{column_name}}" type="text" class="form-control" id="formGroup{{column_name}}Input" placeholder="{{column_name}}">
+                        </div>
+                    {% endfor %}
+                    <button class="btn btn-primary btn-xl padding-10 pl-10" id="submitButton" type="submit">Test</button>
+                </form>
+            </div>
+        </div>
+    </section>
+{% endblock %}

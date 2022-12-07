@@ -9,5 +9,6 @@ urlpatterns = [
     path("upload_csv", views.upload_csv, name="upload_csv"),
     path("work_in_progress", views.work_in_progress, name="work_in_progress"),
     path("train_model", views.train_model, name="train_model"),
+    path("test_model", views.test_model, name="test_model"),
     path("prediction_result", views.prediction_result, name="prediction_result"),
 ]
