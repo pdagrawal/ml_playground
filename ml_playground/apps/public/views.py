@@ -10,6 +10,9 @@ import pickle
 # import matplotlib.pyplot as plt
 from sklearn import preprocessing
 from sklearn.svm import SVC
+from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LogisticRegression
+from sklearn import tree
 # from sklearn.metrics import accuracy_score
 # from sklearn.metrics import confusion_matrix
 # from sklearn.model_selection import train_test_split
@@ -82,13 +85,33 @@ def create_svm_model(training_samples, clf_labels, **svm_params):
     svm_model = SVC(**svm_params)
     svm_model.fit(training_samples, clf_labels)
 
-    with open("tmp/iris.pkl", 'wb') as f:
+    with open("tmp/svm.pkl", 'wb') as f:
         pickle.dump(svm_model, f)
 
+def create_multiple_regression_model(training_samples, clf_labels):
+    multiple_reg=LinearRegression()  
+    multiple_reg.fit(training_samples, clf_labels)
+
+    with open("tmp/multiple.pkl",'wb') as f:
+        pickle.dump(multiple_reg,f)
+
+def create_logistic_regression_model(training_samples, clf_labels, **logistic_params):
+    logistic=LogisticRegression(**logistic_params)  
+    logistic.fit(training_samples, clf_labels)
+
+    with open("tmp/logistic.pkl",'wb') as f:
+        pickle.dump(logistic,f)
+
+def create_decisiontree_model(training_samples, clf_labels, **dt_params):
+    dt_model = tree.DecisionTreeClassifier(**dt_params)
+    dt_model = dt_model.fit(training_samples, clf_labels)
+
+    with open("tmp/decision.pkl", 'wb') as f:
+        pickle.dump(dt_model, f)
 
 def transform_dataset(df, dump_encoder=False, clf_param=""):
-    if dump_encoder and os.path.exists('tmp/iris_encoder.pkl'):
-        os.remove('tmp/iris_encoder.pkl')
+    if dump_encoder and os.path.exists('tmp/model_encoder.pkl'):
+        os.remove('tmp/model_encoder.pkl')
     for column_name in df.columns:
         print(column_name)
         if df[column_name].dtype == object:
@@ -97,7 +120,7 @@ def transform_dataset(df, dump_encoder=False, clf_param=""):
 
             # Save the label encoder for future predictions
             if dump_encoder and column_name == clf_param:
-                with open('tmp/iris_encoder.pkl', 'wb') as file:
+                with open('tmp/model_encoder.pkl', 'wb') as file:
                     pickle.dump(enc, file, pickle.HIGHEST_PROTOCOL)
     return df
 
@@ -128,12 +151,14 @@ def test(model_file, sample):
     with open(model_file, 'rb') as f:
         model = pickle.load(f)
 
-    predicted_value = model.predict(sample)
-    if os.path.exists('tmp/iris_encoder.pkl'):
-        with open('tmp/iris_encoder.pkl', 'rb') as handle:
+    #predicted_value = model.predict(sample)
+    predicted_value = [int(model.predict(sample))]
+    if os.path.exists('tmp/model_encoder.pkl'):
+        with open('tmp/model_encoder.pkl', 'rb') as handle:
             encoder = pickle.load(handle)
         
         predicted_value =  encoder.inverse_transform(predicted_value)
+
     
     return predicted_value
 
@@ -147,17 +172,44 @@ def train_model(request: HttpRequest) -> HttpResponse:
     print("========================")
     data = process_dataset(request.session['uploaded_file_path'], attributes, classification)
 
-    svm_params = {'kernel': 'rbf'}
-    create_svm_model(data[0], data[1], **svm_params)
-
-    # x_test = [[1, 'Full-time', 'Mid-Senior level']]
     x_test = [[7.7, 2.6, 6.9, 2.3]]
     sample = pd.DataFrame(
         x_test, columns=attributes)
     sample = transform_dataset(sample)
-    predicted_value = test("tmp/iris.pkl", sample)
+
+    if algorithm == "SVM":
+
+            svm_params = {'kernel': 'rbf'}
+            create_svm_model(data[0], data[1], **svm_params)
+            predicted_value = test("tmp/svm.pkl", sample)
+
+    elif algorithm == "Decision Tree":
+            dt_params = {}
+            model = create_decisiontree_model(data[0], data[1], **dt_params)
+            predicted_value = test("tmp/decision.pkl", sample)
+
+    elif algorithm == "Multiple Regression":
+            create_multiple_regression_model(data[0], data[1])
+            predicted_value = test("tmp/multiple.pkl", sample)
+
+
+    elif algorithm == "Logistic Regression":
+            logistic_params = {'solver' : 'liblinear', 'random_state' : 0}
+            model = create_logistic_regression_model(data[0], data[1], **logistic_params)
+            predicted_value = test("tmp/logistic.pkl", sample)
+        
+    # x_test = [[1, 'Full-time', 'Mid-Senior level']]
+    #x_test = [[7.7, 2.6, 6.9, 2.3]]
+    #sample = pd.DataFrame(
+    #    x_test, columns=attributes)
+    #sample = transform_dataset(sample)
+    #predicted_value = test("tmp/iris.pkl", sample)
+    
     messages.success(request, "successfully predicted.")
     return render(request, "prediction_result.html", {'predicted_value': predicted_value})
+
+    
+
 
 def prediction_result(request: HttpRequest, predicted_value) -> HttpResponse:
     return render(request, "prediction_result.html", {'predicted_value': predicted_value})

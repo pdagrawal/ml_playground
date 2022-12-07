@@ -20,14 +20,14 @@ def create_svm_model(training_samples, clf_labels, **svm_params):
     with open("tmp/iris.pkl", 'wb') as f:
         pickle.dump(svm_model, f)
 
-def create_multiple_regression(training_samples, clf_labels):
-    lin_reg=LinearRegression()  
-    lin_reg.fit(training_samples, clf_labels)
+def create_multiple_regression_model(training_samples, clf_labels, **mr_params):
+    multiple_reg=LinearRegression(**mr_params)  
+    multiple_reg.fit(training_samples, clf_labels)
 
     with open("tmp/multiple.pkl",'wb') as f:
-        pickle.dump(lin_reg,f)
+        pickle.dump(multiple_reg,f)
 
-def create_logistic_regression(training_samples, clf_labels, **logistic_params):
+def create_logistic_regression_model(training_samples, clf_labels, **logistic_params):
     logistic=LogisticRegression(**logistic_params)  
     logistic.fit(training_samples, clf_labels)
 
@@ -114,7 +114,7 @@ test("tmp/iris_dt.pkl", sample)
 
 
 logistic_params = {'solver' : 'liblinear', 'random_state' : 0}
-model = create_logistic_regression(data[0], data[1], **logistic_params)
+model = create_logistic_regression_model(data[0], data[1], **logistic_params)
 '''
 x_test = [[7.7, 2.6, 6.9, 2.3]]
 #x_test = [[6.3, 2.3, 4.4, 1.3]]
@@ -125,7 +125,7 @@ sample = transform_dataset(sample)
 test("tmp/logistic.pkl", sample)
 
 
-mr_model = create_multiple_regression(data[0], data[1])
+mr_model = create_multiple_regression_model(data[0], data[1])
 '''
 x_test = [[7.7, 2.6, 6.9, 2.3]]
 #x_test = [[6.3, 2.3, 4.4, 1.3]]
