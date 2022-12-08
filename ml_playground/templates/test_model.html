@@ -22,8 +22,15 @@
                                 <input name="{{column_name}}" type="text" class="form-control" id="formGroup{{column_name}}Input" placeholder="{{column_name}}">
                             </div>
                         {% endfor %}
-                        <button class="btn btn-primary btn-xl padding-10 pl-10" id="submitButton" type="submit">Test</button>
+                        <div class="padding-10">
+                            <button class="btn btn-primary btn-xl padding-10 pl-10 full-width" id="submitButton" type="submit">Test</button>
+                        </div>
                     </form>
+                    {% if predicted_value %}
+                        <div class="padding-10 text-align-center mt-50">
+                            <h2>Predicted Value: {{ predicted_value }}</h1>
+                        </div>
+                    {% endif %}
                 </div>
                 <div class="col-md-6 pull-right padding-10">
                     <h2 class="text-align-center">Accuracy: {{accuracy}}%</h2>

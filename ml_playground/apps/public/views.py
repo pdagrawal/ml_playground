@@ -20,6 +20,7 @@ from sklearn.model_selection import train_test_split
 
 logger = logging.getLogger(__name__)
 
+
 def index(request: HttpRequest) -> HttpResponse:
     request.session['uploaded_file_path'] = None
     request.session['joined_parameters'] = None
@@ -27,8 +28,10 @@ def index(request: HttpRequest) -> HttpResponse:
     request.session['predicted_value'] = None
     return render(request, "index.html")
 
+
 def about(request: HttpRequest) -> HttpResponse:
     return render(request, "about.html")
+
 
 def upload_dataset(request: HttpRequest) -> HttpResponse:
     # return redirect('public:index')
@@ -38,9 +41,10 @@ def upload_dataset(request: HttpRequest) -> HttpResponse:
     # if not GET, then proceed
     try:
         dataset_file = request.FILES["dataset_file"]
-        #if file is too large, return
+        # if file is too large, return
         if dataset_file.multiple_chunks():
-            messages.error(request, "Uploaded file is too big (%.2f MB)." % (dataset_file.size/(1000*1000),))
+            messages.error(request, "Uploaded file is too big (%.2f MB)." % (
+                dataset_file.size/(1000*1000),))
             return render(request, "public/index.html")
 
         if dataset_file.name.endswith('.csv'):
@@ -62,6 +66,7 @@ def upload_dataset(request: HttpRequest) -> HttpResponse:
 
     return render(request, "field_selection.html", {'column_names': column_names})
 
+
 def create_svm_model(training_samples, clf_labels, **svm_params):
     svm_model = SVC(**svm_params)
     svm_model.fit(training_samples, clf_labels)
@@ -71,23 +76,26 @@ def create_svm_model(training_samples, clf_labels, **svm_params):
 
     return svm_model
 
+
 def create_multiple_regression_model(training_samples, clf_labels):
     multiple_reg = LinearRegression()
     multiple_reg.fit(training_samples, clf_labels)
 
-    with open("tmp/multiple_regression.pkl",'wb') as f:
-        pickle.dump(multiple_reg,f)
+    with open("tmp/multiple_regression.pkl", 'wb') as f:
+        pickle.dump(multiple_reg, f)
 
     return multiple_reg
+
 
 def create_logistic_regression_model(training_samples, clf_labels, **logistic_params):
     logistic = LogisticRegression(**logistic_params)
     logistic.fit(training_samples, clf_labels)
 
-    with open("tmp/logistic_regression.pkl",'wb') as f:
-        pickle.dump(logistic,f)
+    with open("tmp/logistic_regression.pkl", 'wb') as f:
+        pickle.dump(logistic, f)
 
     return logistic
+
 
 def create_decisiontree_model(training_samples, clf_labels, **dt_params):
     dt_model = tree.DecisionTreeClassifier(**dt_params)
@@ -98,6 +106,7 @@ def create_decisiontree_model(training_samples, clf_labels, **dt_params):
 
     return dt_model
 
+
 def transform_dataset(df, dump_encoder=False, clf_param=""):
     if dump_encoder and os.path.exists('tmp/model_encoder.pkl'):
         os.remove('tmp/model_encoder.pkl')
@@ -106,12 +115,14 @@ def transform_dataset(df, dump_encoder=False, clf_param=""):
     for column_name in df.columns:
         if df[column_name].dtype == object:
             encs[column_name] = preprocessing.LabelEncoder().fit(df[column_name])
-            df[column_name] = encs[column_name].transform(df[column_name].astype(str))
+            df[column_name] = encs[column_name].transform(
+                df[column_name].astype(str))
             # Save the label encoder for future predictions
     if dump_encoder:
         with open('tmp/model_encoder.pkl', 'wb') as file:
             pickle.dump(encs, file, pickle.HIGHEST_PROTOCOL)
     return df
+
 
 def transform_test_dataset(df, dump_encoder=False, clf_param=""):
     if os.path.exists('tmp/model_encoder.pkl'):
@@ -170,11 +181,13 @@ def test(model_file, sample, classification: str):
         with open('tmp/model_encoder.pkl', 'rb') as handle:
             encoder = pickle.load(handle)
         if classification in encoder:
-            predicted_value = encoder[classification].inverse_transform(predicted_value)
+            predicted_value = encoder[classification].inverse_transform(
+                predicted_value)
 
     return predicted_value
 
-def decode_labels(df, classification: str) :
+
+def decode_labels(df, classification: str):
     if os.path.exists('tmp/model_encoder.pkl'):
         with open('tmp/model_encoder.pkl', 'rb') as handle:
             encoder = pickle.load(handle)
@@ -183,16 +196,20 @@ def decode_labels(df, classification: str) :
 
     return df
 
+
 def create_cm(df, model, classification):
-    _x_train, x_test, _y_train, y_test = train_test_split(df[0], df[1], test_size=0.20, random_state=42)
+    _x_train, x_test, _y_train, y_test = train_test_split(
+        df[0], df[1], test_size=0.20, random_state=42)
 
     y_pred = model.predict(x_test)
     logger.info(y_pred)
     logger.info(y_test)
-    accuracy = accuracy_score(list(map(int, y_test)), list(map(int, y_pred)))*100
+    accuracy = accuracy_score(list(map(int, y_test)),
+                              list(map(int, y_pred)))*100
     logger.info(f'Accuracty Score: {accuracy}')
 
-    cm = confusion_matrix(decode_labels(y_test, classification), decode_labels(y_pred, classification), labels=df[2])
+    cm = confusion_matrix(decode_labels(y_test, classification), decode_labels(
+        y_pred, classification), labels=df[2])
     ax = plt.subplot()
     sb.heatmap(cm, annot=True, fmt='g', ax=ax)
 
@@ -205,6 +222,7 @@ def create_cm(df, model, classification):
     plt.savefig('static/img/confusion_matrix.png')
     return round(accuracy, 2)
 
+
 def train_model(request: HttpRequest) -> HttpResponse:
     logger.info(request.POST)
     attributes = request.POST.getlist('attributes')
@@ -212,8 +230,9 @@ def train_model(request: HttpRequest) -> HttpResponse:
     request.session['joined_parameters'] = joined_parameters
     logger.info(joined_parameters)
     classification = request.POST.get("classification")
-    algorithm  = request.POST.get("algorithm")
-    data = process_dataset(request, request.session['uploaded_file_path'], attributes, classification)
+    algorithm = request.POST.get("algorithm")
+    data = process_dataset(
+        request, request.session['uploaded_file_path'], attributes, classification)
 
     if algorithm == "svm":
         svm_params = {'kernel': 'rbf'}
@@ -224,8 +243,9 @@ def train_model(request: HttpRequest) -> HttpResponse:
     elif algorithm == "multiple_regression":
         model = create_multiple_regression_model(data[0], data[1])
     elif algorithm == "logistic_regression":
-        logistic_params = {'solver' : 'liblinear', 'random_state' : 0}
-        model = create_logistic_regression_model(data[0], data[1], **logistic_params)
+        logistic_params = {'solver': 'liblinear', 'random_state': 0}
+        model = create_logistic_regression_model(
+            data[0], data[1], **logistic_params)
 
     accuracy = create_cm(data, model, classification)
     request.session['cm_accuracy_score'] = accuracy
@@ -235,11 +255,12 @@ def train_model(request: HttpRequest) -> HttpResponse:
     messages.success(request, "Model trained succcessfully.")
     return redirect('public:test_model')
 
+
 def test_model(request):
     if request.method == 'GET':
         joined_parameters = request.session['joined_parameters']
         column_names = joined_parameters.split(',')
-        return render(request, "test_model.html", {'column_names': column_names, 'accuracy': request.session['cm_accuracy_score']})
+        return render(request, "test_model.html", {'column_names': column_names, 'accuracy': request.session['cm_accuracy_score'], 'predicted_value': request.session['predicted_value']})
     elif request.method == 'POST':
         logger.info(request.POST)
         data = dict(request.POST.items())
@@ -272,11 +293,8 @@ def test_model(request):
         x_test = [data.values()]
         sample = pd.DataFrame(x_test, columns=column_names)
         sample = transform_test_dataset(sample)
-        predicted_value = test(f"tmp/{request.session['selected_algorithm']}.pkl", sample, request.session['selected_classification'])
-        request.session['predicted_value'] = str(predicted_value)
+        predicted_value = test(
+            f"tmp/{request.session['selected_algorithm']}.pkl", sample, request.session['selected_classification'])
+        request.session['predicted_value'] = str(predicted_value[0])
         messages.success(request, "Classification successful.")
-        return redirect('public:prediction_result')
-
-
-def prediction_result(request: HttpRequest) -> HttpResponse:
-    return render(request, "prediction_result.html", {'predicted_value': request.session['predicted_value']})
+        return redirect('public:test_model')

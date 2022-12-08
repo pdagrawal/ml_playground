@@ -99,6 +99,10 @@ body, main {
     float: left;
 }
 
+.file-upload-box {
+    width: 600px;
+}
+
 #share-board .form-floating > .form-control:focus, .form-floating > .form-control:not(:placeholder-shown){
     padding-top: 0;
     padding-bottom: 0;
@@ -112,6 +116,14 @@ body, main {
 .boards .card .content {
     min-height: 200px;
     max-height: 200px;
+}
+
+.full-width {
+    width: 100% !important;
+}
+
+.train-btn {
+    width: 51% !important;
 }
 
 .padding-10 {

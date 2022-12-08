@@ -4,3 +4,4 @@ ml_playground/creds.py
 ml_playground/__pycache__/*
 tmp/**
 info_logs.log
+static/img/confusion_matrix.png
