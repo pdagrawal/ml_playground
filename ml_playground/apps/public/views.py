@@ -201,7 +201,7 @@ def create_cm(df, model, classification):
     ax.set_ylabel('True labels')
     ax.set_title('Confusion Matrix')
     ax.xaxis.set_ticklabels(df[2])
-    ax.yaxis.set_ticklabels(df[2][::-1])
+    ax.yaxis.set_ticklabels(df[2])
     plt.savefig('static/img/confusion_matrix.png')
     return round(accuracy, 2)
 
