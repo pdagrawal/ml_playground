@@ -27,7 +27,6 @@ def index(request: HttpRequest) -> HttpResponse:
     request.session['predicted_value'] = None
     return render(request, "index.html")
 
-
 def about(request: HttpRequest) -> HttpResponse:
     return render(request, "about.html")
 
@@ -63,10 +62,6 @@ def upload_dataset(request: HttpRequest) -> HttpResponse:
 
     return render(request, "field_selection.html", {'column_names': column_names})
 
-def work_in_progress(request: HttpRequest) -> HttpResponse:
-    messages.success(request, f"Filepath: {request.session['uploaded_file_path']}")
-    return render(request, "work_in_progress.html")
-
 def create_svm_model(training_samples, clf_labels, **svm_params):
     svm_model = SVC(**svm_params)
     svm_model.fit(training_samples, clf_labels)
@@ -78,76 +73,106 @@ def create_multiple_regression_model(training_samples, clf_labels):
     multiple_reg=LinearRegression()
     multiple_reg.fit(training_samples, clf_labels)
 
-    with open("tmp/multiple.pkl",'wb') as f:
+    with open("tmp/multiple_regression.pkl",'wb') as f:
         pickle.dump(multiple_reg,f)
 
 def create_logistic_regression_model(training_samples, clf_labels, **logistic_params):
     logistic=LogisticRegression(**logistic_params)
     logistic.fit(training_samples, clf_labels)
 
-    with open("tmp/logistic.pkl",'wb') as f:
+    with open("tmp/logistic_regression.pkl",'wb') as f:
         pickle.dump(logistic,f)
 
 def create_decisiontree_model(training_samples, clf_labels, **dt_params):
     dt_model = tree.DecisionTreeClassifier(**dt_params)
     dt_model = dt_model.fit(training_samples, clf_labels)
 
-    with open("tmp/decision.pkl", 'wb') as f:
+    with open("tmp/decision_tree.pkl", 'wb') as f:
         pickle.dump(dt_model, f)
 
 def transform_dataset(df, dump_encoder=False, clf_param=""):
     if dump_encoder and os.path.exists('tmp/model_encoder.pkl'):
         os.remove('tmp/model_encoder.pkl')
-    for column_name in df.columns:
-        # print(column_name)
-        if df[column_name].dtype == object:
-            enc = preprocessing.LabelEncoder().fit(df[column_name])
-            df[column_name] = enc.transform(df[column_name])
 
+    encs = {}
+    for column_name in df.columns:
+        if df[column_name].dtype == object:
+            encs[column_name] = preprocessing.LabelEncoder().fit(df[column_name])
+            df[column_name] = encs[column_name].transform(df[column_name].astype(str))
             # Save the label encoder for future predictions
-            if dump_encoder and column_name == clf_param:
-                with open('tmp/model_encoder.pkl', 'wb') as file:
-                    pickle.dump(enc, file, pickle.HIGHEST_PROTOCOL)
+    if dump_encoder:
+        with open('tmp/model_encoder.pkl', 'wb') as file:
+            pickle.dump(encs, file, pickle.HIGHEST_PROTOCOL)
+    return df
+
+def transform_test_dataset(df, dump_encoder=False, clf_param=""):
+    if os.path.exists('tmp/model_encoder.pkl'):
+        with open('tmp/model_encoder.pkl', 'rb') as handle:
+            encoder = pickle.load(handle)
+
+    for column_name in df.columns:
+        if df[column_name].dtype == object:
+            df[column_name] = encoder[column_name].transform(df[column_name])
     return df
 
 
-def process_dataset(dataset_file, training_params=[], clf_params=""):
+def process_dataset(request, dataset_file, training_params=[], classification=""):
     if dataset_file.endswith('.csv'):
         df = pd.read_csv(dataset_file)
     elif dataset_file.endswith('.xlsx'):
         df = pd.read_excel(dataset_file)
 
+    df = df.dropna()
+    unique_values = df[classification].unique()
     logger.info(df.describe())
     logger.info(df.info())
-    df = df.dropna()
+
+    logger.info("===========train_model: Dtypes=============")
+    logger.info(df.dtypes)
+    logger.info("========================")
+
+    dtypes = []
+    for k, v in dict(df.dtypes).items():
+        if k in training_params:
+            dtypes.append(str(v))
+
+    request.session['selected_parameters_dtypes'] = ','.join(dtypes)
+
     # Transform non-numeric columns
-    df = transform_dataset(df, True, clf_params)
+    df = transform_dataset(df, True, classification)
     # Get classification labels.
-    clf_labels = df[clf_params]
-    print(clf_labels.size)
+    clf_labels = df[classification]
 
     # Drop the classification labels to form training parameters.
-    df.drop(clf_params, axis=1, inplace=True)
+    df.drop(classification, axis=1, inplace=True)
 
     # Keep features which are selected by the user.
     for param in list(set(df.columns.values) - set(training_params)):
         df.drop(param, axis=1, inplace=True)
 
-    return [df, clf_labels]
+    return [df, clf_labels, unique_values]
 
 
-def test(model_file, sample):
+def test(model_file, sample, classification: str):
     with open(model_file, 'rb') as f:
         model = pickle.load(f)
 
-    #predicted_value = model.predict(sample)
     predicted_value = [int(model.predict(sample))]
     if os.path.exists('tmp/model_encoder.pkl'):
         with open('tmp/model_encoder.pkl', 'rb') as handle:
             encoder = pickle.load(handle)
-        predicted_value =  encoder.inverse_transform(predicted_value)
+        if classification in encoder:
+            predicted_value = encoder[classification].inverse_transform(predicted_value)
 
     return predicted_value
+
+def decode_labels(df, classification: str) :
+    if os.path.exists('tmp/model_encoder.pkl'):
+        with open('tmp/model_encoder.pkl', 'rb') as handle:
+            encoder = pickle.load(handle)
+        df = encoder[classification].inverse_transform(df)
+
+    return df
 
 def train_model(request: HttpRequest) -> HttpResponse:
     logger.info(request.POST)
@@ -157,7 +182,7 @@ def train_model(request: HttpRequest) -> HttpResponse:
     logger.info(joined_parameters)
     classification = request.POST.get("classification")
     algorithm  = request.POST.get("algorithm")
-    data = process_dataset(request.session['uploaded_file_path'], attributes, classification)
+    data = process_dataset(request, request.session['uploaded_file_path'], attributes, classification)
 
     if algorithm == "svm":
         svm_params = {'kernel': 'rbf'}
@@ -172,6 +197,7 @@ def train_model(request: HttpRequest) -> HttpResponse:
         create_logistic_regression_model(data[0], data[1], **logistic_params)
 
     request.session['selected_algorithm'] = algorithm
+    request.session['selected_classification'] = classification
     messages.success(request, "Model trained succcessfully.")
     return redirect('public:test_model')
 
@@ -194,12 +220,25 @@ def test_model(request):
         logger.info("===========Data=============")
         logger.info(data)
         logger.info("========================")
-        x_test = [data.values()]
+
         joined_parameters = request.session['joined_parameters']
         column_names = joined_parameters.split(',')
+        dtypes = request.session['selected_parameters_dtypes'].split(',')
+        logger.info("===========Dtypes=============")
+        logger.info(dtypes)
+        logger.info("========================")
+        for i in range(len(dtypes)):
+            if dtypes[i] == 'float64':
+                data[column_names[i]] = float(data[column_names[i]])
+            elif dtypes[i] == 'int64':
+                data[column_names[i]] = int(data[column_names[i]])
+            else:
+                data[column_names[i]] = str(data[column_names[i]])
+
+        x_test = [data.values()]
         sample = pd.DataFrame(x_test, columns=column_names)
-        sample = transform_dataset(sample)
-        predicted_value = test(f"tmp/{request.session['selected_algorithm']}.pkl", sample)
+        sample = transform_test_dataset(sample)
+        predicted_value = test(f"tmp/{request.session['selected_algorithm']}.pkl", sample, request.session['selected_classification'])
         request.session['predicted_value'] = str(predicted_value)
         messages.success(request, "Classification successful.")
         return redirect('public:prediction_result')
