@@ -179,7 +179,7 @@ def decode_labels(df, classification: str) :
         with open('tmp/model_encoder.pkl', 'rb') as handle:
             encoder = pickle.load(handle)
         if classification in encoder:
-            df = encoder[classification].inverse_transform(df)
+            df = encoder[classification].inverse_transform(df.astype(int))
 
     return df
 
@@ -189,7 +189,7 @@ def create_cm(df, model, classification):
     y_pred = model.predict(x_test)
     logger.info(y_pred)
     logger.info(y_test)
-    accuracy = accuracy_score(y_test, y_pred)*100
+    accuracy = accuracy_score(list(map(int, y_test)), list(map(int, y_pred)))*100
     logger.info(f'Accuracty Score: {accuracy}')
 
     cm = confusion_matrix(decode_labels(y_test, classification), decode_labels(y_pred, classification), labels=df[2])
