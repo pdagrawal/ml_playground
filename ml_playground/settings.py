@@ -35,8 +35,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "ml_playground.apps.accounts.apps.AccountsConfig",
-    "ml_playground.apps.boards.apps.BoardsConfig",
     "tinymce",
 ]
 

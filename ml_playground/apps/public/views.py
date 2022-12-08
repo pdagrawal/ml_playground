@@ -266,12 +266,6 @@ def test_model(request):
         data = dict(request.POST.items())
         del data['csrfmiddlewaretoken']
 
-        # x_test = [[7.7, 2.6, 6.9, 2.3]]  # Iris-virginica
-        # x_test = [['Mid-Senior level', "Bachelor's Degree", "Financial Services"]]  # 0
-        # x_test = [['Mid-Senior level', "High School or equivalent", "Oil & Energy"]]  # 1
-        # x_test = [['x','s','y','t','a','f','c','b','k','e','c','s','s','w','w','p','w','o','p','n','n','g']]  # e
-        # x_test = [['x','y','w','t','p','f','c','n','n','e','e','s','s','w','w','p','w','o','p','k','s','u']]  # p
-
         logger.info("===========Data=============")
         logger.info(data)
         logger.info("========================")
