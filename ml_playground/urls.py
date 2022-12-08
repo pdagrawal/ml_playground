@@ -21,7 +21,5 @@ from . import views
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("ml_playground.apps.public.urls")),
-    path("accounts/", include("ml_playground.apps.accounts.urls")),
-    path("boards/", include("ml_playground.apps.boards.urls")),
     path('tinymce/', include('tinymce.urls')),
 ]
