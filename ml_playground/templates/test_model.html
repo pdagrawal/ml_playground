@@ -13,16 +13,22 @@
                 <div class="divider-custom-line"></div>
             </div>
             <div class="justify-content-center">
-                <form name="testModel" novalidate="novalidate" method="post">
-                    {% csrf_token %}
-                    {% for column_name in column_names %}
-                        <div class="form-group padding-10">
-                            <label for="formGroup{{column_name}}Input">{{column_name}}</label>
-                            <input name="{{column_name}}" type="text" class="form-control" id="formGroup{{column_name}}Input" placeholder="{{column_name}}">
-                        </div>
-                    {% endfor %}
-                    <button class="btn btn-primary btn-xl padding-10 pl-10" id="submitButton" type="submit">Test</button>
-                </form>
+                <div class="col-md-6 pull-left padding-20">
+                    <form name="testModel" novalidate="novalidate" method="post">
+                        {% csrf_token %}
+                        {% for column_name in column_names %}
+                            <div class="form-group padding-10">
+                                <label for="formGroup{{column_name}}Input">{{column_name}}</label>
+                                <input name="{{column_name}}" type="text" class="form-control" id="formGroup{{column_name}}Input" placeholder="{{column_name}}">
+                            </div>
+                        {% endfor %}
+                        <button class="btn btn-primary btn-xl padding-10 pl-10" id="submitButton" type="submit">Test</button>
+                    </form>
+                </div>
+                <div class="col-md-6 pull-right padding-10">
+                    <h2 class="text-align-center">Accuracy: {{accuracy}}%</h2>
+                    <img src="{% static 'img/confusion_matrix.png' %}" alt="Confusion Matrix">
+                </div>
             </div>
         </div>
     </section>

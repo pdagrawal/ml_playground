@@ -6,17 +6,17 @@ import logging
 
 import pandas as pd
 import pickle
-# import numpy as np
-# import seaborn as sb
-# import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sb
+import matplotlib.pyplot as plt
 from sklearn import preprocessing
 from sklearn.svm import SVC
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn import tree
-# from sklearn.metrics import accuracy_score
-# from sklearn.metrics import confusion_matrix
-# from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import confusion_matrix
+from sklearn.model_selection import train_test_split
 
 logger = logging.getLogger(__name__)
 
@@ -69,19 +69,25 @@ def create_svm_model(training_samples, clf_labels, **svm_params):
     with open("tmp/svm.pkl", 'wb') as f:
         pickle.dump(svm_model, f)
 
+    return svm_model
+
 def create_multiple_regression_model(training_samples, clf_labels):
-    multiple_reg=LinearRegression()
+    multiple_reg = LinearRegression()
     multiple_reg.fit(training_samples, clf_labels)
 
     with open("tmp/multiple_regression.pkl",'wb') as f:
         pickle.dump(multiple_reg,f)
 
+    return multiple_reg
+
 def create_logistic_regression_model(training_samples, clf_labels, **logistic_params):
-    logistic=LogisticRegression(**logistic_params)
+    logistic = LogisticRegression(**logistic_params)
     logistic.fit(training_samples, clf_labels)
 
     with open("tmp/logistic_regression.pkl",'wb') as f:
         pickle.dump(logistic,f)
+
+    return logistic
 
 def create_decisiontree_model(training_samples, clf_labels, **dt_params):
     dt_model = tree.DecisionTreeClassifier(**dt_params)
@@ -89,6 +95,8 @@ def create_decisiontree_model(training_samples, clf_labels, **dt_params):
 
     with open("tmp/decision_tree.pkl", 'wb') as f:
         pickle.dump(dt_model, f)
+
+    return dt_model
 
 def transform_dataset(df, dump_encoder=False, clf_param=""):
     if dump_encoder and os.path.exists('tmp/model_encoder.pkl'):
@@ -170,9 +178,32 @@ def decode_labels(df, classification: str) :
     if os.path.exists('tmp/model_encoder.pkl'):
         with open('tmp/model_encoder.pkl', 'rb') as handle:
             encoder = pickle.load(handle)
-        df = encoder[classification].inverse_transform(df)
+        if classification in encoder:
+            df = encoder[classification].inverse_transform(df)
 
     return df
+
+def create_cm(df, model, classification):
+    _x_train, x_test, _y_train, y_test = train_test_split(df[0], df[1], test_size=0.20, random_state=42)
+
+    y_pred = model.predict(x_test)
+    logger.info(y_pred)
+    logger.info(y_test)
+    accuracy = accuracy_score(y_test, y_pred)*100
+    logger.info(f'Accuracty Score: {accuracy}')
+
+    cm = confusion_matrix(decode_labels(y_test, classification), decode_labels(y_pred, classification), labels=df[2])
+    ax = plt.subplot()
+    sb.heatmap(cm, annot=True, fmt='g', ax=ax)
+
+    # labels, title and ticks
+    ax.set_xlabel('Predicted labels')
+    ax.set_ylabel('True labels')
+    ax.set_title('Confusion Matrix')
+    ax.xaxis.set_ticklabels(df[2])
+    ax.yaxis.set_ticklabels(df[2][::-1])
+    plt.savefig('static/img/confusion_matrix.png')
+    return round(accuracy, 2)
 
 def train_model(request: HttpRequest) -> HttpResponse:
     logger.info(request.POST)
@@ -186,15 +217,18 @@ def train_model(request: HttpRequest) -> HttpResponse:
 
     if algorithm == "svm":
         svm_params = {'kernel': 'rbf'}
-        create_svm_model(data[0], data[1], **svm_params)
+        model = create_svm_model(data[0], data[1], **svm_params)
     elif algorithm == "decision_tree":
         dt_params = {}
-        create_decisiontree_model(data[0], data[1], **dt_params)
+        model = create_decisiontree_model(data[0], data[1], **dt_params)
     elif algorithm == "multiple_regression":
-        create_multiple_regression_model(data[0], data[1])
+        model = create_multiple_regression_model(data[0], data[1])
     elif algorithm == "logistic_regression":
         logistic_params = {'solver' : 'liblinear', 'random_state' : 0}
-        create_logistic_regression_model(data[0], data[1], **logistic_params)
+        model = create_logistic_regression_model(data[0], data[1], **logistic_params)
+
+    accuracy = create_cm(data, model, classification)
+    request.session['cm_accuracy_score'] = accuracy
 
     request.session['selected_algorithm'] = algorithm
     request.session['selected_classification'] = classification
@@ -205,7 +239,7 @@ def test_model(request):
     if request.method == 'GET':
         joined_parameters = request.session['joined_parameters']
         column_names = joined_parameters.split(',')
-        return render(request, "test_model.html", {'column_names': column_names})
+        return render(request, "test_model.html", {'column_names': column_names, 'accuracy': request.session['cm_accuracy_score']})
     elif request.method == 'POST':
         logger.info(request.POST)
         data = dict(request.POST.items())

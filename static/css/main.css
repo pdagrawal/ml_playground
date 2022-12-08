@@ -117,6 +117,9 @@ body, main {
 .padding-10 {
     padding: 10px !important;
 }
+.padding-20 {
+    padding: 20px !important;
+}
 
 .mt-50 {
     margin-top: 50px !important;
