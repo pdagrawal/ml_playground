@@ -13,6 +13,7 @@ Architecture:
 ![image](https://github.com/pdagrawal/ml_playground/assets/20897894/383cdb15-d54a-4356-97d5-3fa3a94f7084)
 
 Interactive UI:
+
 ![image](https://github.com/pdagrawal/ml_playground/assets/20897894/ffbba95a-b250-4986-b23e-145576397d58)
 ![image](https://github.com/pdagrawal/ml_playground/assets/20897894/b8e07808-44ee-4124-b4c1-c1bd9f25f710)
 ![image](https://github.com/pdagrawal/ml_playground/assets/20897894/08cd9b5c-e220-4afb-937a-e6eecf6b8480)
