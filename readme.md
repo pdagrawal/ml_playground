@@ -1,21 +1,27 @@
-# CRYPTOBOARD
-![Devise Logo](https://github.com/p98a/crypto_board/blob/master/CryptoBoard_image.jpeg)
+# ML PLAYGROUND
 
-CryptoBoard, is an application which provides users a way to collaborate securely without being concerned about their data integrity and privacy being compromised.
+ML playground is a web-platform that allows users to interact with machine learning algorithms from the browser. Users can upload any dataset, select a model, configure features and interact with the model by providing the test data.
+
 
 Features:
 * It is a Docker and Python based web application.
-* It provides users the ability to grant access to boards which they are authorized to and maintains the others boards encrypted.
-* The Data in the boards is encrypted before it is being saved into the database and the plain text is displayed only to the owner and the users who have access to it.
+* Users can upload the dataset in csv, xlsx file format.
+* Users will have flexibility to select different ML algorithms to train the model.
+* Supports Support Vector Machine, Multiple Regression, Decision Tree and Logistic Regression ML algorithms.
+* Users will have option to specify features to train the model.
+* After training the model, user will be able to interact with the model by providing test samples.
 
 
-## Steps to start running CryptoBoard
-Please follow below steps to start the implementation of CryptoBoard Application.
+Architecture:
+![image](https://github.com/pdagrawal/ml_playground/assets/20897894/383cdb15-d54a-4356-97d5-3fa3a94f7084)
+
+## Steps to start running ML Playground
+Please follow below steps to start the implementation of ml_playground Application.
 
 - Install Python 3.0 or higher, Django, Docker in your local system.
 - Clone the code from the github link into your local system.
 ```
-https://github.com/p98a/crypto_board
+https://github.com/pdagrawal/ml_playground
 ```
 - Open Docker and execute the 2 commands given below to setup the application environment.
 Command 1:
